@@ -152,39 +152,110 @@ class _TelaInicialState extends State<TelaInicial> {
       useSafeArea: true,
       showDragHandle: true,
       backgroundColor: creme,
-      builder: (sheetContext) => SingleChildScrollView(
-          child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-        child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
-                  child: AspectRatio(
-                      aspectRatio: 1.8, child: FotoProduto(produto))),
-              const SizedBox(height: 20),
-              Text(produto.nome,
-                  style: const TextStyle(
-                      fontSize: 27, fontWeight: FontWeight.bold, color: verde)),
-              const SizedBox(height: 10),
-              Text(produto.descricao,
-                  style: const TextStyle(fontSize: 17, height: 1.5)),
-              const SizedBox(height: 20),
-              Text(dinheiro(produto.centavos),
-                  style: const TextStyle(
-                      fontSize: 28, fontWeight: FontWeight.bold, color: verde)),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.pop(sheetContext);
-                  _adicionar(produto);
-                },
-                icon: const Icon(Icons.add_shopping_cart),
-                label: const Text('Adicionar ao carrinho'),
-              ),
-            ]),
-      )),
+      builder: (sheetContext) => StatefulBuilder(builder: (context, atualizar) {
+        String tamanho = 'Normal';
+        final extras = <String>{};
+        final removidos = <String>{};
+        final observacoes = TextEditingController();
+        const opcoesExtras = {
+          'Cream cheese extra': 300,
+          'Cebolinha extra': 150,
+          'Gergelim': 100
+        };
+        const ingredientes = ['Arroz japonês', 'Cream cheese', 'Cebolinha'];
+        return SingleChildScrollView(
+            child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: AspectRatio(
+                        aspectRatio: 1.8, child: FotoProduto(produto))),
+                const SizedBox(height: 20),
+                Text(produto.nome,
+                    style: const TextStyle(
+                        fontSize: 27,
+                        fontWeight: FontWeight.bold,
+                        color: verde)),
+                const SizedBox(height: 10),
+                Text(produto.descricao,
+                    style: const TextStyle(fontSize: 17, height: 1.5)),
+                const SizedBox(height: 18),
+                const Text('Tamanho',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, color: verde)),
+                DropdownButton<String>(
+                  value: tamanho,
+                  isExpanded: true,
+                  items: const ['Pequeno', 'Normal', 'Grande']
+                      .map((item) =>
+                          DropdownMenuItem(value: item, child: Text(item)))
+                      .toList(),
+                  onChanged: (value) => atualizar(() => tamanho = value!),
+                ),
+                const Text('Ingredientes extras',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, color: verde)),
+                ...opcoesExtras.entries.map((item) => CheckboxListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      title: Text('${item.key} (+${dinheiro(item.value)})'),
+                      value: extras.contains(item.key),
+                      onChanged: (value) => atualizar(() => value!
+                          ? extras.add(item.key)
+                          : extras.remove(item.key)),
+                    )),
+                const Text('Remover ingredientes',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, color: verde)),
+                ...ingredientes.map((item) => CheckboxListTile(
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(item),
+                      value: removidos.contains(item),
+                      onChanged: (value) => atualizar(() => value!
+                          ? removidos.add(item)
+                          : removidos.remove(item)),
+                    )),
+                TextField(
+                  controller: observacoes,
+                  maxLines: 2,
+                  decoration: const InputDecoration(
+                      labelText: 'Observações',
+                      hintText: 'Ex.: pouco molho, por favor',
+                      border: OutlineInputBorder()),
+                ),
+                const SizedBox(height: 18),
+                Builder(builder: (context) {
+                  final adicional = extras.fold<int>(
+                      0, (total, nome) => total + opcoesExtras[nome]!);
+                  final ajusteTamanho = tamanho == 'Grande'
+                      ? 500
+                      : tamanho == 'Pequeno'
+                          ? -300
+                          : 0;
+                  final preco = produto.centavos + adicional + ajusteTamanho;
+                  return Text(dinheiro(preco),
+                      style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: verde));
+                }),
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.pop(sheetContext);
+                    _adicionar(produto);
+                  },
+                  icon: const Icon(Icons.add_shopping_cart),
+                  label: const Text('Adicionar ao carrinho'),
+                ),
+              ]),
+        ));
+      }),
     );
   }
 
